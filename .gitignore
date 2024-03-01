@@ -1,0 +1,11 @@
+node_modules
+dist
+docker-data
+combined.log
+.env
+.husky
+dist/
+.prettierrc
+package-lock.json
+tsconfig.json
+
