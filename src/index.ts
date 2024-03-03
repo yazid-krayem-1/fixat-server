@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
@@ -6,7 +7,11 @@ import { registerRoutes } from './routes';
 import { errorHandler, loggerMiddleware } from './app/middlewares';
 import connectToDatabase from './core/database';
 import logger from './utils/logger';
-import i18n from './utils/i18n';
+import i18nextMiddleware from 'i18next-http-middleware';
+import { i18n } from './config/i18n';
+import bodyParser from 'body-parser';
+const swaggerUi = require('swagger-ui-express');
+const swaggerDocument = require('./swagger.json');
 
 async function startServer() {
   try {
@@ -15,30 +20,32 @@ async function startServer() {
     logger.info('Database connected successfully.');
 
     const app = express();
-    const i18nMiddleware = i18n.init(
-      {
-        fallbackLng: 'en',
-        backend: {
-          loadPath: '../locales/{{lng}}/{{ns}}.json',
-        },
-        detection: {
-          order: ['querystring', 'cookie'],
-          caches: ['cookie'],
-        },
-      }
-    );
-    app.use((await i18nMiddleware).$TFunctionBrand);
-
-    // ...
-
-    // Global Middlewares
-    app.use(loggerMiddleware); // Log each request
     app.use(helmet()); // Helps secure your apps by setting various HTTP headers
-    app.use(cors()); // Enable CORS
-    app.use(express.json()); // Parse JSON bodies
+    app.use(
+      cors({
+        origin: config.CORS_ORIGIN,
+        optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
+      })
+    ); // Enable CORS
+    app.use(loggerMiddleware); // Log requests
+    app.use(bodyParser.json());
+    app.use(bodyParser.urlencoded({ extended: true }));
+    app.use(express.static('public')); // Serve static files
+    app.use('/uploads', express.static('uploads')); // Serve static files
+
+    app.use(fileUpload({
+      useTempFiles : true,
+      tempFileDir : '/tmp/'
+  }));
+
+    app.use(i18nextMiddleware.handle(i18n));
 
     // Register Routes
     registerRoutes(app);
+
+    // swagger
+    app.use('/api-docs', swaggerUi.serve);
+    app.get('/api-docs', swaggerUi.setup(swaggerDocument));
 
     // Error Handling Middleware - should be the last piece of middleware
     app.use(errorHandler);
@@ -54,3 +61,7 @@ async function startServer() {
 }
 
 startServer();
+function fileUpload(arg0: {useTempFiles: boolean; tempFileDir: string;}): any {
+  throw new Error('Function not implemented.');
+}
+

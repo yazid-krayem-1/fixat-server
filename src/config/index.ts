@@ -1,2 +1,3 @@
 export * from './config';
-export * from './sequelize';
+export * from './database';
+export * from './i18n';

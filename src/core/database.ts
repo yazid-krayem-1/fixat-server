@@ -1,11 +1,10 @@
-import sequelize from '../config/sequelize';
 import logger from '../utils/logger';
-import '../models/associations';
+import db from '../database/data-source';
 
 const connectToDatabase = async (): Promise<void> => {
   try {
-    await sequelize.authenticate();
-    await sequelize.sync();
+    await db.sequelize.authenticate();
+    await db.sequelize.sync();
     logger.info('Connection has been established successfully.');
     // sequelize.sync() // Uncomment if you want Sequelize to synchronize the model with the database automatically
   } catch (error) {
